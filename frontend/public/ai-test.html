@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mayalu AI Test</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+  body{background:#0a0a14;color:#f1f5f9;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .box{width:100%;max-width:500px;background:#13131a;border:1px solid #1e1e2e;border-radius:16px;overflow:hidden}
+  .top{padding:16px 20px;border-bottom:1px solid #1e1e2e;display:flex;align-items:center;gap:12px}
+  .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+  .top h2{font-size:16px}.top p{font-size:12px;color:#64748b}
+  #chat{height:400px;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:80%;padding:10px 16px;border-radius:14px;font-size:14px;line-height:1.5}
+  .ai{background:#1a1a24;border:1px solid #1e1e2e;align-self:flex-start;border-top-left-radius:4px}
+  .user{background:#1a2a1f;border:1px solid #1e2e22;align-self:flex-end;border-top-right-radius:4px}
+  #inputWrap{display:flex;padding:12px 16px;border-top:1px solid #1e1e2e;gap:8px}
+  #input{flex:1;padding:10px 16px;border-radius:24px;border:1px solid #1e1e2e;background:#0e0e14;color:#f1f5f9;font-size:14px;outline:none}
+  button{padding:10px 20px;border-radius:24px;border:none;background:#2563eb;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+  button:disabled{opacity:.5;cursor:default}
+  .status{text-align:center;font-size:11px;color:#64748b;padding:4px}
+  .error{color:#f87171;text-align:center;font-size:12px;padding:8px}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="top">
+    <div class="av">M</div>
+    <div><h2>Mayalu - AI Test</h2><p id="stage"></p></div>
+  </div>
+  <div id="chat"></div>
+  <div id="status" class="status">Ready</div>
+  <div id="error" class="error"></div>
+  <form id="inputWrap" onsubmit="return send()">
+    <input id="input" placeholder="Type a message..." autofocus />
+    <button type="submit" id="btn">Send</button>
+  </form>
+</div>
+<script>
+let sessionId = null;
+
+async function init() {
+  document.getElementById('status').textContent = 'Connecting to Mayalu...';
+  document.getElementById('btn').disabled = true;
+  try {
+    const r = await fetch('/api/ai/greet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({language:'en'})});
+    const d = await r.json();
+    sessionId = d.sessionId;
+    document.getElementById('stage').textContent = 'Stage: '+d.stage;
+    addMsg(d.response, true);
+    document.getElementById('status').textContent = 'Connected';
+    document.getElementById('btn').disabled = false;
+  } catch(e) {
+    document.getElementById('error').textContent = 'FAILED: '+e.message+' — Is backend running on port 3001?';
+    document.getElementById('status').textContent = 'Disconnected';
+  }
+}
+
+function addMsg(text, isAI) {
+  const d = document.createElement('div');
+  d.className = 'msg '+(isAI?'ai':'user');
+  d.textContent = text;
+  document.getElementById('chat').appendChild(d);
+  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+}
+
+async function send() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if(!text) return false;
+  input.value = '';
+  addMsg(text, false);
+  document.getElementById('status').textContent = 'Thinking...';
+  document.getElementById('btn').disabled = true;
+  try {
+    const r = await fetch('/api/ai/respond',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,language:'en',sessionId})});
+    const d = await r.json();
+    sessionId = d.sessionId;
+    document.getElementById('stage').textContent = 'Stage: '+d.stage;
+    addMsg(d.response, true);
+    document.getElementById('status').textContent = 'Connected';
+    document.getElementById('btn').disabled = false;
+  } catch(e) {
+    addMsg('Error: '+e.message, true);
+    document.getElementById('status').textContent = 'Error';
+    document.getElementById('btn').disabled = false;
+  }
+  document.getElementById('input').focus();
+  return false;
+}
+
+init();
+</script>
+</body>
+</html>
