@@ -1,6 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "https://mayalu-4x92.onrender.com/api/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next"
 }
