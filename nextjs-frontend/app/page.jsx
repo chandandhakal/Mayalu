@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/contexts';
 import {
-  Phone, Users, TrendingUp, Clock, ThumbsUp, BarChart3, Headphones, Sparkles
+  Phone, Users, TrendingUp, Clock, ThumbsUp, BarChart3, Headphones, Sparkles, Plus, Loader2
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [sent, setSent] = useState(null);
   const [err, setErr] = useState(false);
   const [vc, setVc] = useState(false);
+  const [gen, setGen] = useState(false);
   const router = useRouter();
 
   const fd = async () => {
@@ -35,6 +36,18 @@ export default function DashboardPage() {
       console.error(e);
       setErr(true);
     }
+  };
+
+  const genTest = async () => {
+    setGen(true);
+    try {
+      await fetch('/api/test/generate', { method: 'POST' });
+      await fd();
+    } catch (e) {
+      console.error(e);
+      setErr(true);
+    }
+    setGen(false);
   };
 
   useEffect(() => { fd(); }, []);
@@ -55,12 +68,12 @@ export default function DashboardPage() {
     ? ((stats.totalLeads / Math.max(stats.totalCalls - (stats.activeCalls || 0), 1)) * 100).toFixed(1)
     : '0';
 
-  const meta = [
+  const meta = stats ? [
     { icon: Phone, label: T('totalCalls'), value: stats.totalCalls, sub: `${stats.activeCalls || 0} active`, c: t.pink, bg: t.pinkBg, br: t.pinkBorder },
     { icon: Users, label: T('totalLeads'), value: stats.totalLeads, sub: `${stats.qualifiedLeads || 0} qualified`, c: t.teal, bg: t.tealBg, br: t.tealBorder },
     { icon: TrendingUp, label: T('conversionRate'), value: `${cr}%`, sub: `Score: ${stats.avgLeadScore || 0}`, c: t.amber, bg: t.amberBg, br: t.amberBorder },
     { icon: Clock, label: T('avgCallDuration'), value: `${stats.avgCallDuration || 0}s`, sub: `Sent: ${stats.avgSentiment ? (stats.avgSentiment * 100).toFixed(0) : 0}%`, c: t.violet, bg: t.violetBg, br: t.violetBorder },
-  ];
+  ] : [];
 
   const btnBase = {
     display: 'flex', alignItems: 'center', gap: 7,
@@ -90,6 +103,16 @@ export default function DashboardPage() {
           >
             <Headphones size={16} /> Voice Demo
           </button>
+          <button
+            onClick={genTest}
+            disabled={gen}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px',
+              borderRadius: 10, border: 'none', cursor: gen ? 'wait' : 'pointer',
+              background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff',
+              fontSize: 13, fontWeight: 600, opacity: gen ? 0.7 : 1,
+            }}
+          >{gen ? <><Loader2 size={14} style={{animation: 'spin .7s linear infinite'}} /> Generating...</> : <><Plus size={14} /> Test Call</>}</button>
           <button
             onClick={fd}
             style={{
