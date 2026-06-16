@@ -5,8 +5,6 @@ echo     Mayalu - Starting Next.js App
 echo =============================================
 echo.
 
-cd /d "%~dp0nextjs-frontend"
-
 echo Starting Next.js dev server (port 3000)...
 echo.
 echo   Frontend:  http://localhost:3000
